@@ -1,0 +1,415 @@
+/* AagroecologicalGroupRegistryRef
+ * Author: ssa
+ * Creation date: 5/27/2024
+ */
+
+REFINEMENT AgroecologicalGroupRegistryRef
+REFINES AgroecologicalGroupRegistry
+
+
+INCLUDES
+    SmartLanduseDB
+    
+
+SETS
+    QUERY_PERFORMED = { 
+        READY_TO_INIT, 
+        RECORDS_EXTRACTED,
+        RECORD_SELECTED,
+        ZONE_TRANSFORMED, 
+        PROVINCE_TRANSFORMED,   
+        REGION_TRANSFORMED,   
+        DISTRICT_TRANSFORMED, 
+        GROUP_TRANSFORMED,
+        TYPE_TRANSFORMED,
+        TOPSOIL_TRANSFORMED,
+        HUMUS_TRANSFORMED,
+        PHKCL_TRANSFORMED,
+        ACIDITY_TRANSFORMED
+    }
+
+
+DEFINITIONS
+    tmp_ae_group_struct == struct(
+	    administrative_region: seq(0..255),
+	    zone: seq(0..255),
+	    province: seq(0..255),
+	    administrative_district: seq(0..255),
+	    ae_group: seq(0..255),
+	    description: seq(0..255),
+	    ae_type: seq(0..255), 
+	    topsoil_thickness: seq(0..255),
+	    humus_content: seq(0..255),
+	    phkcl: seq(0..255),
+	    hydrolytic_acidity: seq(0..255),
+	    ground_water_level: seq(0..255),
+	    relief: seq(0..255),
+	    otlozheniya: seq(0..255),
+	    pochva: seq(0..255),
+	    climate: seq(0..255)
+    )
+
+ABSTRACT_CONSTANTS
+    
+    topsoil_thickness_constant,
+    cm_constant,
+    humus_content_constant,
+    percent_constant,
+    phkcl_constant,
+    hydrolytic_acidity_constant,
+    mg_eq_100_constant,
+    ground_water_level_constant,
+    m_constant
+
+PROPERTIES
+    
+    topsoil_thickness_constant = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1] &
+    cm_constant = [0, 0, 0, 0, 0, 0, 0, 0, 1, 2] &
+    humus_content_constant = [0, 0, 0, 0, 0, 0, 0, 0, 2, 1] &
+    percent_constant = [0, 0, 0, 0, 0, 0, 0, 0, 2, 2] &
+    phkcl_constant = [0, 0, 0, 0, 0, 0, 0, 0, 3, 1] &
+    hydrolytic_acidity_constant = [0, 0, 0, 0, 0, 0, 0, 0, 4, 1] &
+    mg_eq_100_constant = [0, 0, 0, 0, 0, 0, 0, 0, 4, 2] &
+    ground_water_level_constant = [0, 0, 0, 0, 0, 0, 0, 0, 5, 1] &
+    m_constant = [0, 0, 0, 0, 0, 0, 0, 0, 5, 2] 
+    
+ABSTRACT_VARIABLES
+
+
+
+    tmp_ae_group,
+    r_group,
+
+	v_zone_id,
+	v_province_id,
+	v_administrative_region_id,
+	v_administrative_district_id,
+	v_ae_group_id,
+	v_ae_type_id,
+	
+	records_to_transform,
+	queries_performed
+	
+
+
+INVARIANT 
+
+
+    tmp_ae_group: FIN(tmp_ae_group_struct) &
+    r_group: tmp_ae_group_struct &
+        
+	v_zone_id: INT &
+	v_province_id: INT &
+	v_administrative_region_id: INT &
+	v_administrative_district_id: INT &
+	v_ae_group_id: INT &
+	v_ae_type_id: INT &
+
+    records_to_transform: FIN(tmp_ae_group_struct) &
+    queries_performed: QUERY_PERFORMED &
+    
+    
+   (queries_performed = READY_TO_INIT & 
+    tmp_ae_group /= {} & 
+    records_to_transform = {} =>
+       !(record).(record: tmp_ae_group => 
+           #(azone, aprovince, aregion, arz, adistrict, adp, agroup, atype, paet).(
+               azone: zone & record'zone = azone'name &
+               
+               aprovince: province & record'province = aprovince'name & 
+               aprovince'zone_id = azone'zone_id &
+               
+               aregion: administrative_region & record'administrative_region = aregion'name &
+               arz: administrative_region_zone & 
+               arz'administrative_region_id = aregion'administrative_region_id & 
+               arz'zone_id = azone'zone_id &
+               
+               adistrict: administrative_district & record'administrative_district = adistrict'name & 
+               adistrict'administrative_region_id = aregion'administrative_region_id &
+               adp: administrative_district_province &
+               adp'administrative_district_id = adistrict'administrative_district_id &
+               adp'province_id = aprovince'province_id &
+               
+               agroup: ae_group & record'ae_group = agroup'name & 
+               
+               atype: ae_type & record'ae_type = atype'name & 
+               atype'ae_group_id = agroup'ae_group_id & 
+               atype'relief = record'relief &
+               atype'otlozheniya = record'otlozheniya &
+               atype'pochva = record'pochva &
+               atype'climate = record'climate &
+               paet: province_ae_type &
+               paet'province_id = aprovince'province_id &
+               paet'ae_type_id = atype'ae_type_id &
+               
+               (record'topsoil_thickness /= [0] => 
+                   #(aetp).(aetp: ae_type_property & 
+                       aetp'ae_type_id = atype'ae_type_id & 
+                       aetp'name = topsoil_thickness_constant &
+                       aetp'units = cm_constant &
+                       aetp'value = record'topsoil_thickness
+                   ) 
+               ) &
+               
+               (record'humus_content /= [0] => 
+                   #(aetp).(aetp: ae_type_property & 
+                       aetp'ae_type_id = atype'ae_type_id & 
+                       aetp'name = humus_content_constant &
+                       aetp'units = percent_constant &
+                       aetp'value = record'humus_content
+                   ) 
+               ) &
+               
+               (record'phkcl /= [0] => 
+                   #(aetp).(aetp: ae_type_property & 
+                       aetp'ae_type_id = atype'ae_type_id & 
+                       aetp'name = phkcl_constant &
+                       aetp'units = phkcl_constant &
+                       aetp'value = record'phkcl
+                   ) 
+               ) &
+               
+               (record'hydrolytic_acidity /= [0] => 
+                   #(aetp).(aetp: ae_type_property & 
+                       aetp'ae_type_id = atype'ae_type_id & 
+                       aetp'name = hydrolytic_acidity_constant &
+                       aetp'units = mg_eq_100_constant &
+                       aetp'value = record'hydrolytic_acidity
+                   ) 
+               ) &
+               
+
+               (record'ground_water_level /= [0] => 
+                   #(aetp).(aetp: ae_type_property & 
+                       aetp'ae_type_id = atype'ae_type_id & 
+                       aetp'name = ground_water_level_constant &
+                       aetp'units = m_constant &
+                       aetp'value = record'ground_water_level
+                   ) 
+               ) 
+           )
+       ) 
+   )
+
+
+    
+    
+
+
+
+INITIALISATION 
+
+
+
+    tmp_ae_group:= {} ||
+    ANY vv WHERE vv: tmp_ae_group_struct THEN r_group:= vv END ||    
+    
+    ANY vv WHERE vv: INT THEN v_zone_id:= vv END ||
+    ANY vv WHERE vv: INT THEN v_province_id:= vv END ||
+    ANY vv WHERE vv: INT THEN v_administrative_region_id:= vv END ||
+    ANY vv WHERE vv: INT THEN v_administrative_district_id:= vv END ||
+    ANY vv WHERE vv: INT THEN v_ae_group_id:= vv END ||
+    ANY vv WHERE vv: INT THEN v_ae_type_id:= vv END ||
+
+    records_to_transform:=  {} ||
+    queries_performed:= READY_TO_INIT
+
+OPERATIONS
+    
+extract(records) = 
+PRE records: FIN(tmp_ae_group_struct) 
+THEN
+    SELECT queries_performed = READY_TO_INIT
+    THEN 
+        tmp_ae_group:= records ||
+        records_to_transform:= records ||
+        queries_performed:= RECORDS_EXTRACTED
+    END
+END;
+
+
+select_record_to_transform =
+SELECT queries_performed = RECORDS_EXTRACTED
+THEN 
+    IF records_to_transform /= {}
+    THEN
+        ANY vv WHERE vv: records_to_transform
+        THEN
+            r_group:= vv ||
+            queries_performed:= RECORD_SELECTED
+        END
+    ELSE
+        queries_performed:= READY_TO_INIT
+    END
+END;
+
+
+transform_zone = 
+SELECT queries_performed = RECORD_SELECTED
+THEN
+    IF not(#(vv).(vv: zone & vv'name = r_group'zone))
+    THEN
+        insert_into_zone(r_group'zone);
+        ANY vv WHERE vv: zone & vv'name = r_group'zone 
+        THEN
+            v_zone_id:= vv'zone_id 
+        END
+    END
+    ||
+    queries_performed:= ZONE_TRANSFORMED
+END;
+
+
+transform_province = 
+SELECT queries_performed = ZONE_TRANSFORMED
+THEN
+    IF not(#(vv).(vv: province & vv'name = r_group'province & vv'zone_id = v_zone_id))
+    THEN
+        insert_into_province(v_zone_id, r_group'province);
+        ANY vv WHERE vv: province & vv'name = r_group'province & vv'zone_id = v_zone_id
+        THEN
+           v_province_id:= vv'province_id 
+        END
+    END
+    ||
+    queries_performed:= PROVINCE_TRANSFORMED
+END;      
+
+transform_region = 
+SELECT queries_performed = PROVINCE_TRANSFORMED
+THEN
+    IF not(#(vv).(vv: administrative_region & vv'name = r_group'administrative_region))
+    THEN
+        insert_into_administrative_region (r_group'administrative_region);
+        ANY vv WHERE vv: administrative_region & vv'name = r_group'administrative_region 
+        THEN
+           v_administrative_region_id:= vv'administrative_region_id 
+        END;
+        insert_into_administrative_region_zone (v_administrative_region_id, v_zone_id)
+    END
+    ||
+    queries_performed:= REGION_TRANSFORMED
+END;        
+
+transform_district = 
+SELECT queries_performed = REGION_TRANSFORMED
+THEN
+    IF  not(#(vv).(vv: administrative_district & 
+                    vv'name = r_group'administrative_district & 
+                    vv'administrative_region_id = v_administrative_region_id ))
+    THEN
+        insert_into_administrative_district (v_administrative_region_id,  r_group'administrative_district);
+        ANY vv 
+        WHERE 
+            vv: administrative_district & 
+            vv'name = r_group'administrative_district &
+            vv'administrative_region_id = v_administrative_region_id
+        THEN
+            v_administrative_district_id:= vv'administrative_district_id 
+        END;
+        insert_into_administrative_district_province (v_administrative_district_id, v_province_id)
+    END
+    ||
+    queries_performed:= DISTRICT_TRANSFORMED    
+END;        
+
+transform_group = 
+SELECT queries_performed = DISTRICT_TRANSFORMED
+THEN
+    IF not(#(vv).(vv: ae_group & vv'name = r_group'ae_group )) 
+    THEN
+        insert_into_ae_group(r_group'ae_group);
+        ANY vv WHERE vv: ae_group & vv'name = r_group'ae_group 
+        THEN
+           v_ae_group_id:= vv'ae_group_id 
+        END
+    END
+    ||
+    queries_performed:= GROUP_TRANSFORMED    
+END;
+
+transform_type = 
+SELECT queries_performed = GROUP_TRANSFORMED
+THEN
+    IF not(#(vv).(vv: ae_type & vv'name = r_group'ae_type & vv'ae_group_id = v_ae_group_id))
+    THEN
+        insert_into_ae_type(v_ae_group_id, r_group'ae_type, r_group'relief, 
+            r_group'otlozheniya, r_group'pochva, r_group'climate);
+        ANY vv WHERE vv: ae_type & vv'name = r_group'ae_type & vv'ae_group_id = v_ae_group_id
+        THEN
+           v_ae_type_id:= vv'ae_type_id 
+        END;
+        insert_into_province_ae_type (v_province_id, v_ae_type_id)
+     END
+     ||
+     queries_performed:= TYPE_TRANSFORMED
+END;        
+
+
+transform_topsoil = 
+SELECT queries_performed = TYPE_TRANSFORMED
+THEN
+    IF r_group'topsoil_thickness /= [0]
+    THEN
+        insert_into_ae_type_property(v_ae_type_id, 
+           topsoil_thickness_constant, cm_constant, r_group'topsoil_thickness)
+    END
+    ||
+    queries_performed:= TOPSOIL_TRANSFORMED
+END;    
+
+
+transform_humus = 
+SELECT queries_performed = TOPSOIL_TRANSFORMED
+THEN
+    IF r_group'humus_content /= [0]
+    THEN
+        insert_into_ae_type_property(v_ae_type_id, 
+            humus_content_constant, percent_constant, r_group'humus_content)
+    END
+    ||
+    queries_performed:= HUMUS_TRANSFORMED
+END;                
+
+
+transform_phkcl = 
+SELECT queries_performed = HUMUS_TRANSFORMED
+THEN
+    IF r_group'phkcl /= [0]
+    THEN
+        insert_into_ae_type_property(v_ae_type_id, 
+            phkcl_constant, phkcl_constant, r_group'phkcl)
+    END
+    ||
+    queries_performed:= PHKCL_TRANSFORMED
+END;    
+
+
+transform_acidity = 
+SELECT queries_performed = PHKCL_TRANSFORMED
+THEN
+    IF r_group'hydrolytic_acidity /= [0]
+    THEN
+        insert_into_ae_type_property(v_ae_type_id, 
+            hydrolytic_acidity_constant, mg_eq_100_constant, r_group'hydrolytic_acidity)
+    END
+    ||
+    queries_performed:= ACIDITY_TRANSFORMED
+END;                      
+
+
+transform_water_level = 
+SELECT queries_performed = ACIDITY_TRANSFORMED
+THEN
+    IF r_group'ground_water_level /= [0]
+    THEN
+        insert_into_ae_type_property(v_ae_type_id, 
+            ground_water_level_constant, m_constant, r_group'ground_water_level)
+    END
+    ||
+    records_to_transform:= records_to_transform - {r_group}
+    ||
+    queries_performed:= READY_TO_INIT
+END
+
+END
