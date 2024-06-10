@@ -68,9 +68,6 @@ transform_acidity =
 skip;
 
 transform_water_level = 
-skip;
-
-check_all_data_transformed = 
 skip
 
 END
