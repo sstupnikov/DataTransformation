@@ -25,7 +25,8 @@ SETS
         TOPSOIL_TRANSFORMED,
         HUMUS_TRANSFORMED,
         PHKCL_TRANSFORMED,
-        ACIDITY_TRANSFORMED
+        ACIDITY_TRANSFORMED,
+        WATER_LEVEL_TRANSFORMED
     }
 
 
@@ -407,9 +408,19 @@ THEN
             ground_water_level_constant, m_constant, r_group'ground_water_level)
     END
     ||
-    records_to_transform:= records_to_transform - {r_group}
-    ||
-    queries_performed:= READY_TO_INIT
+    queries_performed:= WATER_LEVEL_TRANSFORMED
+END;
+
+check_all_data_transformed = 
+SELECT queries_performed = WATER_LEVEL_TRANSFORMED
+THEN
+    records_to_transform:= records_to_transform - {r_group};
+    IF records_to_transform = {}
+    THEN
+        queries_performed:= READY_TO_INIT
+    ELSE
+        queries_performed:= RECORDS_EXTRACTED    
+    END
 END
 
 END
