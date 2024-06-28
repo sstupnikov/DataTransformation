@@ -408,7 +408,7 @@ THEN
             ground_water_level_constant, m_constant, r_group'ground_water_level)
     END
     ||
-    queries_performed:= RECORDS_EXTRACTED
+    queries_performed:= READY_TO_INIT
 END
 
 END
