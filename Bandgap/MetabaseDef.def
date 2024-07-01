@@ -1,0 +1,27 @@
+DEFINITIONS
+    
+    SystemInfo_struct == struct(
+        DBID: INT,
+        SystemID: INT,
+        ElemNumber: INT,
+        UpdateStatus: INT,
+        Elements: seq(0..255),
+        SystemInfo: seq(0..255),
+        Description: seq(0..255)        
+    );
+    
+    PropertiesInfo_struct == struct(
+        DBID: INT,
+        PropID: INT,
+        Name: seq(0..255),
+        Description: seq(0..255),
+        WWWTemplatePage: seq(0..255),        
+        UpdateStatus: INT
+    );
+    
+    DBContent_struct == struct(
+        DBID: INT,
+        SystemID: INT,        
+        PropID: INT,
+        UpdateStatus: INT        
+    )

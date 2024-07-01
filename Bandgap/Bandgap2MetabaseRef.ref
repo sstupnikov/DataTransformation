@@ -1,0 +1,312 @@
+/* Bandgap2MetabaseRef
+ * Author: ssa
+ * Creation date: 6/26/2024
+ */
+
+REFINEMENT Bandgap2MetabaseRef
+REFINES Bandgap2Metabase
+
+INCLUDES
+    Bandgap,
+    MUService,
+    Metabase
+
+DEFINITIONS
+
+    "BandgapDef.def";
+    "MUServiceDef.def"
+
+SETS
+    TRANSFORMATION_PERFORMED = {
+        READY_TO_TRANSFORM,
+        TRANSFORM_SUBSTANCESCONV_RECORD,
+        TRANSFORM_PROPERTIESCONV,
+        TRANSFORM_PROPERTIESCONV_RECORD,
+        TRANSFORM_DBCONTENTCONV,
+        TRANSFORM_DBCONTENTCONV_RECORD,
+        TRANSFORM_SYSTEM_INFO,
+        TRANSFORM_SYSTEM_INFO_NODE,
+        TRANSFORM_PROPERTIES_INFO,
+        TRANSFORM_PROPERTIES_INFO_NODE,
+        TRANSFORM_DBCONTENT,
+        TRANSFORM_DBCONTENT_NODE        
+    }
+
+ 
+ABSTRACT_VARIABLES
+    
+    state,
+    
+    RSN_SubstancesConv,
+    RSN_PropertiesConv,
+    RSN_DBContentConv,
+    
+    systemInfo,
+    propertiesInfo,
+    dbContent,
+    
+    
+    DBID_current
+    
+    
+INVARIANT
+    
+    state: TRANSFORMATION_PERFORMED &
+    
+    RSN_SubstancesConv: FIN(SubstancesConv_struct) &
+    RSN_PropertiesConv: FIN(PropertiesConv_struct) &
+    RSN_DBContentConv: FIN(DBContentConv_struct) &
+    
+    systemInfo: FIN(SystemInfoItem) &
+    propertiesInfo: FIN(PropertiesInfoItem) &
+    dbContent: FIN(DBContentItem) &
+    
+    DBID_current: INT &
+    
+    
+    ( 
+        state = READY_TO_TRANSFORM &      
+        MetaBase /= MetaBaseConst & 
+        (MetaBase'SystemInfo /= {} or MetaBase'PropertiesInfo /= {} or MetaBase'DBContent /= {}) =>
+
+        !(record).(record: SubstancesConv & record'UpdateStatus = 2 =>
+            not(#(system).(system: SystemInfo & record'SubstanceID = system'SystemID)) ) &
+        !(record).(record: SubstancesConv & record'UpdateStatus > 0 & record'UpdateStatus /= 2 =>
+            #(system).(system: SystemInfo & 
+                record'SubstanceID = system'SystemID & 
+                record'Elements = system'Elements & 
+                record'Compound = system'SystemInfo)) &
+        
+        !(record).(record: PropertiesConv & record'UpdateStatus = 2 =>
+            not(#(prop).(prop: PropertiesInfo & record'NOMPROP = prop'PropID)) ) &
+        !(record).(record: PropertiesConv & record'UpdateStatus > 0 & record'UpdateStatus /= 2 =>
+            #(prop).(prop: PropertiesInfo & 
+                record'NOMPROP = prop'PropID & 
+                record'NAZVPROP = prop'Name & 
+                record'HTML = prop'WWWTemplatePage)) &
+        
+        !(record).(record: DBContentConv & record'UpdateStatus = 2 =>
+            not(#(cont).(cont: DBContent & 
+                    record'SubstanceID = cont'SystemID &
+                    record'NOMPROP = cont'PropID)) ) &
+        !(record).(record: DBContentConv & record'UpdateStatus > 0 & record'UpdateStatus /= 2 =>
+            #(cont).(cont: DBContent & 
+                record'SubstanceID = cont'SystemID &
+                record'NOMPROP = cont'PropID))        
+        
+    )
+    
+
+    
+INITIALISATION 
+    
+    state:= READY_TO_TRANSFORM ||
+    
+    RSN_SubstancesConv:= {} ||
+    RSN_PropertiesConv:= {} ||    
+    RSN_DBContentConv:= {} || 
+    
+    systemInfo:= {} ||
+    propertiesInfo:= {} ||
+    dbContent:= {} ||
+    
+    ANY vv WHERE vv: INT THEN DBID_current:= vv END
+    
+
+OPERATIONS
+    
+ProcessSystemInfo = 
+SELECT state = READY_TO_TRANSFORM
+THEN
+    RSN_SubstancesConv <-- select_SubstancesConv 
+    ||
+    BEGIN
+        clearSystemInfo;
+        clearPropertiesInfo;
+        clearDBContent
+    END
+    ||
+    state := TRANSFORM_SUBSTANCESCONV_RECORD
+END;   
+
+ProcessSystemInfoItem = 
+SELECT state = TRANSFORM_SUBSTANCESCONV_RECORD
+THEN
+    VAR SubstanceID, UpdateStatus, Compound, Elements, tmpLink IN
+        IF RSN_SubstancesConv /= {}
+        THEN
+            ANY rcrd WHERE rcrd: RSN_SubstancesConv
+            THEN
+                SubstanceID := rcrd'SubstanceID;
+                UpdateStatus := rcrd'UpdateStatus;
+                Compound := rcrd'Compound;
+                Elements := rcrd'Elements;
+                
+                tmpLink := rec(
+                    SystemID: SubstanceID,
+                    Elements: Elements,
+                    SystemInfo: Compound,
+                    // Empty sequence [] here causes 'Unexpected Tag' during PO generation
+                    Description: [0],
+                    UpdateStatus: UpdateStatus
+                );
+                
+                createNodeSystemInfoItem(tmpLink);
+                
+                RSN_SubstancesConv:= RSN_SubstancesConv - {rcrd}
+            END
+        ELSE
+            state:= TRANSFORM_PROPERTIESCONV
+        END
+    END
+END;   
+
+ProcessPropertiesInfo = 
+SELECT state = TRANSFORM_PROPERTIESCONV
+THEN
+    RSN_PropertiesConv <-- select_PropertiesConv ||
+    state := TRANSFORM_PROPERTIESCONV_RECORD
+END;
+
+ProcessPropertiesInfoItem = 
+SELECT state = TRANSFORM_PROPERTIESCONV_RECORD
+THEN
+    VAR NOMPROP, UpdateStatus, NAZVPROP, HTML, tmpLink IN
+        IF RSN_PropertiesConv /= {}
+        THEN
+            ANY rcrd WHERE rcrd: RSN_PropertiesConv
+            THEN
+                NOMPROP := rcrd'NOMPROP;
+                UpdateStatus := rcrd'UpdateStatus;
+                NAZVPROP := rcrd'NAZVPROP;
+                HTML := rcrd'HTML;
+                
+                tmpLink := rec(
+                    PropID: NOMPROP,
+                    Name: NAZVPROP,
+                    // Empty sequence [] here causes 'Unexpected Tag' during PO generation
+                    Description: [0],
+                    WWWTemplatePage: HTML,
+                    UpdateStatus: UpdateStatus
+                );
+                
+                createNodePropertiesInfoItem(tmpLink);
+                
+                RSN_PropertiesConv:= RSN_PropertiesConv - {rcrd}
+            END
+        ELSE
+            state:= TRANSFORM_DBCONTENT
+        END
+    END
+END;
+
+ProcessDBContentInfo = 
+SELECT state = TRANSFORM_DBCONTENTCONV
+THEN
+    RSN_PropertiesConv <-- select_PropertiesConv ||
+    state := TRANSFORM_DBCONTENTCONV_RECORD
+END;
+
+ProcessDBContentInfoItem = 
+SELECT state = TRANSFORM_DBCONTENTCONV_RECORD
+THEN
+    VAR SubstanceID, NOMPROP, UpdateStatus, tmpLink IN
+        IF RSN_DBContentConv /= {}
+        THEN
+            ANY rcrd WHERE rcrd: RSN_DBContentConv
+            THEN
+                SubstanceID:= rcrd'SubstanceID;
+                NOMPROP := rcrd'NOMPROP;
+                UpdateStatus := rcrd'UpdateStatus;
+                
+                tmpLink := rec(
+                    SystemID: SubstanceID,
+                    PropID: NOMPROP,
+                    UpdateStatus: UpdateStatus
+                );
+                
+                createNodeDBContentInfoItem(tmpLink);
+                
+                RSN_DBContentConv:= RSN_DBContentConv - {rcrd}
+            END
+        ELSE
+            state:= TRANSFORM_SYSTEM_INFO
+        END
+    END
+END;
+
+TransformSystemInfo = 
+SELECT state = TRANSFORM_SYSTEM_INFO
+THEN
+    systemInfo:= MetaBase'SystemInfo ||
+    state := TRANSFORM_SYSTEM_INFO_NODE
+END;
+
+TransformSystemInfoNode = 
+SELECT state = TRANSFORM_SYSTEM_INFO_NODE
+THEN
+    IF systemInfo /= {}
+    THEN
+        ANY node WHERE node: systemInfo
+        THEN
+            VAR thesystemid, theelemnumber IN
+                thesystemid := node'SystemID;
+                IF thesystemid = 0 THEN thesystemid <-- getNewSystemID(DBID_current) END;
+                theelemnumber <-- GetElementsCountFromString(node'Elements);
+                UpdateSystemInfo(DBID_current, thesystemid, node'Elements, theelemnumber, 
+                    node'SystemInfo, node'Description, node'UpdateStatus)
+            END;                                
+            systemInfo := systemInfo - {node}
+        END                
+    ELSE
+        state := TRANSFORM_PROPERTIES_INFO
+    END
+END;
+
+TransformPropertiesInfo = 
+SELECT state = TRANSFORM_PROPERTIES_INFO
+THEN
+    propertiesInfo:= MetaBase'PropertiesInfo ||
+    state := TRANSFORM_PROPERTIES_INFO_NODE
+END;
+
+TransformPropertiesInfoNode = 
+SELECT state = TRANSFORM_PROPERTIES_INFO_NODE
+THEN
+    IF propertiesInfo /= {}
+    THEN
+        ANY node WHERE node: propertiesInfo
+        THEN
+            UpdatePropertiesInfo(DBID_current, node'PropID, node'Name, node'Description, node'WWWTemplatePage, node'UpdateStatus);
+            propertiesInfo := propertiesInfo - {node}
+        END                
+    ELSE
+        state := TRANSFORM_DBCONTENT
+    END
+END;
+
+TransformDBContent = 
+SELECT state = TRANSFORM_DBCONTENT
+THEN
+    dbContent:= MetaBase'DBContent ||
+    state := TRANSFORM_DBCONTENT_NODE
+END;
+
+TransformDBContentNode = 
+SELECT state = TRANSFORM_DBCONTENT_NODE
+THEN
+    IF dbContent /= {}
+    THEN
+        ANY node WHERE node: dbContent
+        THEN
+            UpdateDBContent(DBID_current, node'SystemID, node'PropID, node'UpdateStatus);
+            dbContent := dbContent - {node}
+        END                
+    ELSE
+        state := READY_TO_TRANSFORM
+    END
+END
+
+
+
+END

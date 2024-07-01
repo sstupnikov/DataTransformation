@@ -1,0 +1,22 @@
+DEFINITIONS
+
+    SubstancesConv_struct == struct(
+        SubstanceID: INT,
+        UpdateStatus: INT,
+        NumElements: INT,
+        Compound: seq(0..255),
+        Elements: seq(0..255)
+    );
+    
+    PropertiesConv_struct == struct(
+        NOMPROP: INT,
+        UpdateStatus: INT,
+        NAZVPROP: seq(0..255),
+        HTML: seq(0..255)
+    );
+    
+    DBContentConv_struct == struct(
+        SubstanceID: INT,
+        NOMPROP: INT,
+        UpdateStatus: INT
+    )

@@ -1,0 +1,57 @@
+<?xml version="1.0" ?>
+<xs:schema targetNamespace="http://meta.imet-db.ru/MUService.xsd" xmlns="http://meta.imet-db.ru/MUService.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified">
+	<xs:element name="MetaBase" type="MetaBaseType" />
+	<xs:complexType name="MetaBaseType">
+		<xs:sequence>
+			<xs:element name="SystemInfo" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="SystemInfoItem" minOccurs="1" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="SystemID" type="xs:integer" minOccurs="1" maxOccurs="1" />
+									<xs:element name="Elements" type="xs:string" minOccurs="1" maxOccurs="1" />
+									<xs:element name="SystemInfo" type="xs:string" minOccurs="1" maxOccurs="1" />
+									<xs:element name="Description" type="xs:string" minOccurs="1" maxOccurs="1" />
+									<xs:element name="UpdateStatus" type="xs:integer" minOccurs="1" maxOccurs="1" />
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="PropertiesInfo" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="PropertiesInfoItem" minOccurs="1" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="PropID" type="xs:integer" minOccurs="1" maxOccurs="1" />
+									<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1" />
+									<xs:element name="Description" type="xs:string" minOccurs="1" maxOccurs="1" />
+									<xs:element name="WWWTemplatePage" type="xs:string" minOccurs="1" maxOccurs="1" />
+									<xs:element name="UpdateStatus" type="xs:integer" minOccurs="1" maxOccurs="1" />
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DBContent" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="DBContentItem" minOccurs="1" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="SystemID" type="xs:integer" minOccurs="1" maxOccurs="1" />
+									<xs:element name="PropID" type="xs:integer" minOccurs="1" maxOccurs="1" />
+									<xs:element name="UpdateStatus" type="xs:integer" minOccurs="1" maxOccurs="1" />
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

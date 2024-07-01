@@ -1,0 +1,22 @@
+DEFINITIONS
+    SystemInfoItem == struct(
+        SystemID: INT,
+        Elements: seq(0..255),
+        SystemInfo: seq(0..255),
+        Description: seq(0..255),
+        UpdateStatus: INT
+    );
+    
+    PropertiesInfoItem == struct(
+        PropID: INT,
+        Name: seq(0..255),
+        Description: seq(0..255),
+        WWWTemplatePage: seq(0..255),
+        UpdateStatus: INT
+    );
+    
+    DBContentItem == struct(
+        SystemID: INT,
+        PropID: INT,
+        UpdateStatus: INT
+    )
