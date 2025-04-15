@@ -1,0 +1,103 @@
+
+##### Setup-code
+last_wds=fld[0]
+
+
+##### Pre-iteration-code
+
+compA="A"
+compB="B"
+fld2=fld[2].strip()
+if fld2!="":
+  if len(fld2)==2:
+    compA=fld2[0]
+    compB=fld2[1]
+  else:
+    fs=fld2.split(",")
+    if len(fs)==2:
+      compA=fs[0]
+      compB=fs[1]
+    else:
+      raise_error
+
+band="vis"
+if fld[18].find("B")>=0:
+  band="blue"
+if fld[18].find("K")>=0:
+  band="ir"
+if fld[18].find("R")>=0:
+  band="red"
+
+pmC=1.0
+if fld[18].find("P")>=0:
+  pmC=10
+
+otype="Vis"
+if fld[18].find("S")>=0 or fld[18].find("U")>=0 or fld[18].find("Y")>=0:
+  otype="Opt"
+
+
+  sptypes=fld[12].split("+")
+
+if len(sptypes)!=2: 
+  sptypeA=fld[12]
+  sptypeB=None
+else:
+    sptypeA=sptypes[0]
+    sptypeB=sptypes[1]
+
+
+RA1=hms2deg(float(fld[20]),float(fld[21]),float(fld[22]))
+DE1=float(fld[23]+"1")*dms2deg(float(fld[24]),float(fld[25]),float(fld[26]))
+
+if fld[7] >=0 and fld[9] >= 0:
+  theta=fld[7]
+  rho=fld[9]
+  year=fld[4]
+elif fld[6] >=0 and fld[8] >=0:
+  theta=fld[6]
+  rho=fld[8]
+  year=fld[3]
+else:
+  theta=None
+  rho=None
+  year=fld[4]
+  
+if rho>=0:
+  (RA2,DE2)=rel2abs(RA1,DE1,theta,asec2deg(rho))
+else: rho=None
+
+
+##### Iteration-code
+
+objB:id=fld[0]+compB
+pair:EType="D"
+objB:mag=fld[11]
+objB:crdRA=RA2
+pair:OType=otype
+objA:id=fld[0]+compA
+objA:pmRA=pmC*fld[13] if fld[13] is not None else None
+objB:pmDE=pmC*fld[16] if fld[16] is not None else None
+objA:crdDE=DE1
+objB:band=band
+objA:is_flg=True
+objB:pmRA=pmC*fld[15] if fld[15] is not None else None
+pair:Rho=rho
+objA:pmDE=pmC*fld[14] if fld[14] is not None else None
+pair:band=band
+pair:compB=fld[0]+compB
+objA:crdRA=RA1
+objA:band=band
+objB:spType=spcodeB
+pair:Theta=theta
+objB:crdDE=DE2
+sys:is_flg=last_wds!=fld[0]
+objA:mag=fld[10]
+pair:Epoch=year
+objA:spType=spcodeA
+pair:compA=fld[0]+compA
+pair:id=fld[0]+(fld[2].strip() if fld[2].strip()!="" else "AB")
+sys:id=fld[0]
+
+##### Post-iteration-code
+last_wds=""
