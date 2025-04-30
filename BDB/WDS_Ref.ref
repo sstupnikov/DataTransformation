@@ -1,0 +1,792 @@
+/* WDS_Ref
+ * Author: ssa
+ * Creation date: 4/2/2025
+ */
+
+REFINEMENT WDS_Ref
+REFINES WDS
+
+INCLUDES
+    StringType, Conversions, BDB
+
+SETS
+    ITERATION_STATE = {
+        INITIAL,
+        COMP_AB_INIT,
+        FLD2_STRIP,
+        COMP_AB_UPDATE,
+        //FLD2_SPLIT,
+        FLD18_FIND_B,
+        FLD18_FIND_K,
+        FLD18_FIND_R,
+        FLD18_FIND_P,
+        FLD18_FIND_S,
+        FLD18_FIND_U,
+        FLD18_FIND_Y,
+        FLD12_SPLIT,
+        SPTYPES_INIT,        
+        REL_RADE_INIT,
+        THETA_RHO_YEAR_INIT,        
+        ABS_RADE_INIT,
+        
+        COMP_A_CREATED,
+        COMP_B_CREATED,
+        PAIR_CREATED,
+        SYSTEM_CREATED,
+        LAST_WDS_UPDATED,
+        
+        COMPLETED
+    }
+
+ABSTRACT_CONSTANTS
+    RECORD_COUNT
+    
+PROPERTIES
+    RECORD_COUNT: INT & 
+    RECORD_COUNT > 0
+    
+
+ABSTRACT_VARIABLES
+    fld0, fld1, fld2, fld3, fld4, fld5, fld6, fld7, fld8, fld9, fld10, fld11, fld12, fld13, fld14, fld15, fld16, fld17, fld18, fld19, fld20, fld21, fld22, fld23, fld24, fld25, fld26,
+
+    // 1..RECORD_COUNT
+    iteration_num,
+    
+    iteration_state,
+    
+    last_wds,
+    last_sys_catline_id,
+    last_compA_catline_id,
+    last_compB_catline_id,
+    
+    // auxilary variables
+    compA,
+    compB,
+    fld2aux, // 'fld2' from wds.dat_parsing    
+    fs,
+    spBand, // 'band' from BDB schema
+    pmC,
+    otype,
+    S_count,
+    U_count,
+    Y_count,
+    sptypes,
+    sptypeA,
+    sptypeB,
+    RA1, RA2,
+    DE1, DE2,
+    theta,
+    rho,
+    year
+    
+INVARIANT 
+    fld0: seq(seq(CHAR)) & size(fld0) = RECORD_COUNT &
+    !str.(str: ran(fld0) => size(str) <= 10) &
+
+    fld1: seq(seq(CHAR)) & size(fld1) = RECORD_COUNT &
+    !str.(str: ran(fld1) => size(str) <= 7) &
+
+    fld2: seq(seq(CHAR)) & size(fld2) = RECORD_COUNT &
+    !str.(str: ran(fld2) => size(str) <= 5 & str: FIN(str)) &
+
+    fld3: seq(INT) & size(fld3) = RECORD_COUNT &
+    
+    fld4: seq(INT) & size(fld4) = RECORD_COUNT &    
+
+    fld5: seq(INT) & size(fld5) = RECORD_COUNT &    
+
+    fld6: seq(INT) & size(fld6) = RECORD_COUNT &    
+
+    fld7: seq(INT) & size(fld7) = RECORD_COUNT &    
+
+    fld8: seq(REAL) & size(fld8) = RECORD_COUNT  &   
+
+    fld9: seq(REAL) & size(fld9) = RECORD_COUNT  &   
+
+    fld10: seq(REAL) & size(fld10) = RECORD_COUNT  &   
+
+    fld11: seq(REAL) & size(fld11) = RECORD_COUNT &
+    
+    fld12: seq(seq(CHAR)) & size(fld12) = RECORD_COUNT &
+    !str.(str: ran(fld12) => size(str) <= 10 & str: FIN(str)) &
+    
+    fld13: seq(INT) & size(fld13) = RECORD_COUNT &    
+    
+    fld14: seq(INT) & size(fld14) = RECORD_COUNT &    
+    
+    fld15: seq(INT) & size(fld15) = RECORD_COUNT &    
+    
+    fld16: seq(INT) & size(fld16) = RECORD_COUNT &
+    
+    fld17: seq(seq(CHAR)) & size(fld17) = RECORD_COUNT &
+    !str.(str: ran(fld17) => size(str) <= 9) &
+
+    fld18: seq(seq(CHAR)) & size(fld18) = RECORD_COUNT &
+    !str.(str: ran(fld18) => size(str) <= 4) &
+
+    fld19: seq(seq(CHAR)) & size(fld19) = RECORD_COUNT &
+    !str.(str: ran(fld19) => size(str) <= 1) &
+
+    fld20: seq(INT) & size(fld20) = RECORD_COUNT &
+
+    fld21: seq(INT) & size(fld21) = RECORD_COUNT &
+
+    fld22: seq(REAL) & size(fld22) = RECORD_COUNT &
+
+    fld23: seq(seq(CHAR)) & size(fld23) = RECORD_COUNT &
+    !str.(str: ran(fld23) => size(str) <= 1) &
+
+    fld24: seq(INT) & size(fld24) = RECORD_COUNT &
+    
+    fld25: seq(INT) & size(fld25) = RECORD_COUNT &
+    
+    fld26: seq(REAL) & size(fld26) = RECORD_COUNT &
+
+    iteration_num: INT &
+    iteration_state: ITERATION_STATE &
+    
+    last_wds: seq(CHAR) & size(last_wds) <= 10 &
+    last_sys_catline_id: INT &
+    last_compA_catline_id: INT &
+    last_compB_catline_id: INT &    
+    
+    compA: seq(CHAR) &
+    compB: seq(CHAR) &
+    fld2aux: seq(CHAR) & 
+    fs: seq(seq(CHAR)) &
+    spBand: seq(CHAR) & 
+    pmC: REAL &
+    otype: seq(CHAR) &
+    S_count: INT &
+    U_count: INT &
+    Y_count: INT &
+    sptypes: seq(seq(CHAR)) &
+    sptypeA: seq(CHAR) &
+    sptypeB: seq(CHAR) &
+    RA1: REAL &
+    RA2: REAL &
+    DE1: REAL &
+    DE2: REAL &
+    theta: REAL &
+    rho: REAL &
+    year: INT &
+    
+    // data integration property
+    
+    
+    ((iteration_state = COMPLETED) =>
+    !(ii).(ii: INT & ii >= 1 & ii <= RECORD_COUNT =>
+        #(asystem, apair, acompA, acompB, asystem_catline, apair_catline, acompA_catline, acompB_catline).(
+            asystem: bdb3_models_bdbsystem &
+            apair: bdb3_models_bdbpair &
+            acompA: bdb3_models_bdbcomp &
+            acompB: bdb3_models_bdbcomp & 
+            
+            apair'sys_catline_id = asystem'catline_id &
+            acompA'sys_catline_id = asystem'catline_id &
+            acompB'sys_catline_id = asystem'catline_id &
+            apair'compA_catline_id = acompA'catline_id &
+            apair'compB_catline_id = acompB'catline_id &
+            
+            asystem_catline: bdb3_models_catline &
+            apair_catline: bdb3_models_catline &
+            acompA_catline: bdb3_models_catline &
+            acompB_catline: bdb3_models_catline  &
+            
+            asystem_catline'cat_id = asystem'catline_id &
+            apair_catline'cat_id = apair'catline_id &
+            acompA_catline'cat_id = acompA'catline_id &
+            acompB_catline'cat_id = acompB'catline_id & 
+            
+            asystem_catline'obj_id = fld0(ii) &
+            apair'EType = [CHAR_D] &
+            acompA'mag = fld10(ii) &
+            acompB'mag = fld11(ii) &
+            
+            ((CHAR_B: ran(fld18(ii)) => apair'spBand = [CHAR_b, CHAR_l, CHAR_u, CHAR_e])) &
+            ((CHAR_K: ran(fld18(ii)) => apair'spBand = [CHAR_i, CHAR_r])) &
+            ((CHAR_R: ran(fld18(ii)) => apair'spBand = [CHAR_r, CHAR_e, CHAR_d])) &
+            (CHAR_B /: ran(fld18(ii)) & CHAR_K /: ran(fld18(ii)) & CHAR_R /: ran(fld18(ii)) => 
+                apair'spBand = [CHAR_v, CHAR_i, CHAR_s]) &
+            
+            (CHAR_S: ran(fld18(ii)) or CHAR_U /: ran(fld18(ii)) or CHAR_Y /: ran(fld18(ii)) => 
+                apair'OType = [CHAR_O, CHAR_p, CHAR_t]) &            
+            (CHAR_S /: ran(fld18(ii)) & CHAR_U /: ran(fld18(ii)) & CHAR_Y /: ran(fld18(ii)) => 
+                apair'spBand = [CHAR_V, CHAR_i, CHAR_s]) &
+            
+            #(str).(str: seq(CHAR) & apair_catline'obj_id = fld0(ii)^str) &
+            #(str).(str: seq(CHAR) & acompA_catline'obj_id = fld0(ii)^str) &
+            #(str).(str: seq(CHAR) & acompB_catline'obj_id = fld0(ii)^str) 
+        )                
+    ))
+
+INITIALISATION
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 10)
+    THEN fld0:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 7)
+    THEN fld1:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 5 & str: FIN(str))
+    THEN fld2:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld3:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld4:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld5:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld6:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld7:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(REAL) & size(fld) = RECORD_COUNT 
+    THEN fld8:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(REAL) & size(fld) = RECORD_COUNT 
+    THEN fld9:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(REAL) & size(fld) = RECORD_COUNT 
+    THEN fld10:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(REAL) & size(fld) = RECORD_COUNT 
+    THEN fld11:= fld 
+    END
+    ||
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 10 & str: FIN(str))
+    THEN fld12:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld13:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld14:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld15:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld16:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 9)
+    THEN fld17:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 4)
+    THEN fld18:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 1)
+    THEN fld19:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld20:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld21:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(REAL) & size(fld) = RECORD_COUNT 
+    THEN fld22:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(seq(CHAR)) & size(fld) = RECORD_COUNT &
+        !str.(str: ran(fld) => size(str) <= 1)
+    THEN fld23:= fld 
+    END 
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld24:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(INT) & size(fld) = RECORD_COUNT 
+    THEN fld25:= fld 
+    END
+    ||    
+    ANY fld WHERE 
+        fld: seq(REAL) & size(fld) = RECORD_COUNT 
+    THEN fld26:= fld 
+    END
+    ||
+    iteration_num:= 1
+    ||
+    iteration_state:= INITIAL
+    ||
+    last_wds:= []
+    ||
+    last_sys_catline_id:= 0
+    ||
+    last_compA_catline_id:= 0    
+    ||
+    last_compB_catline_id:= 0    
+    ||
+    compA:= []
+    ||
+    compB:= []
+    ||
+    fld2aux:= []
+    ||
+    fs:= []
+    ||
+    spBand:= []
+    ||
+    pmC:= 0.0
+    ||
+    otype:= []    
+    ||
+    S_count:= 0
+    ||
+    U_count:= 0
+    ||
+    Y_count:= 0
+    ||
+    sptypes:= []
+    ||    
+    sptypeA:= []
+    ||
+    sptypeB:= []
+    ||
+    RA1:= 0.0
+    ||
+    RA2:= 0.0
+    ||
+    DE1:= 0.0
+    ||
+    DE2:= 0.0
+    ||
+    theta:= 0.0
+    ||
+    rho:= 0.0
+    ||
+    year:= 0    
+
+
+OPERATIONS 
+
+pre_iteration_CompInit = 
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = INITIAL
+THEN 
+    compA:= [CHAR_A];
+    compB:= [CHAR_B];
+    iteration_state:= COMP_AB_INIT
+END;
+
+pre_iteration_CompStrip = 
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = COMP_AB_INIT
+THEN      
+    fld2aux <-- strip(fld2(iteration_num));
+    iteration_state:= FLD2_STRIP
+END;
+
+pre_iteration_CompSimpleUpdate = 
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD2_STRIP &
+    fld2aux /= [] &
+    size(fld2aux) = 2 
+THEN      
+    compA:= [fld2aux(1)];
+    compB:= [fld2aux(2)];
+    iteration_state:= COMP_AB_UPDATE
+END;
+
+pre_iteration_CompSplit = 
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD2_STRIP &
+    fld2aux /= [] &
+    size(fld2aux) /= 2 
+THEN      
+    fs <-- binary_split(fld2aux, CHAR_COMMA);
+    compA:= fs(1);
+    compB:= fs(2);
+    iteration_state:= COMP_AB_UPDATE
+END;
+
+pre_iteration_band_blue =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = COMP_AB_UPDATE
+THEN    
+    spBand:= [CHAR_v, CHAR_i, CHAR_s];
+    VAR nn IN
+        nn <-- find(fld18(iteration_num), CHAR_B);
+        IF nn >= 0 THEN spBand:= [CHAR_b, CHAR_l, CHAR_u, CHAR_e] END
+    END;
+    iteration_state:= FLD18_FIND_B
+END;    
+
+pre_iteration_band_ir =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_B
+THEN    
+    VAR nn IN
+        nn <-- find(fld18(iteration_num), CHAR_K);
+        IF nn >= 0 THEN spBand:= [CHAR_i, CHAR_r] END    
+    END;
+    iteration_state:= FLD18_FIND_K
+END;    
+
+pre_iteration_band_red =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_K
+THEN    
+    VAR nn IN
+        nn <-- find(fld18(iteration_num), CHAR_R);
+        IF nn >= 0 THEN spBand:= [CHAR_r, CHAR_e, CHAR_d] END    
+    END;
+    iteration_state:= FLD18_FIND_R
+END;    
+
+
+pre_iteration_pmC =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_R
+THEN
+    pmC:= 1.0;
+    VAR nn IN
+        nn <-- find(fld18(iteration_num), CHAR_P);
+        IF nn >= 0 THEN pmC:= 10.0 END    
+    END;
+    iteration_state:= FLD18_FIND_P
+END;    
+
+pre_iteration_otype_S =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_P
+THEN
+    otype:= [CHAR_V, CHAR_i, CHAR_s];
+    S_count <-- find(fld18(iteration_num), CHAR_S);
+    iteration_state:= FLD18_FIND_S
+END;    
+
+pre_iteration_otype_U =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_S
+THEN
+    U_count <-- find(fld18(iteration_num), CHAR_U);
+    iteration_state:= FLD18_FIND_U
+END;    
+
+pre_iteration_otype_Y =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_U
+THEN
+    Y_count <-- find(fld18(iteration_num), CHAR_Y);
+    IF S_count >= 0 or U_count >= 0 or Y_count >= 0 THEN otype:= [CHAR_O, CHAR_p, CHAR_t] END;
+    iteration_state:= FLD18_FIND_Y
+END;    
+
+
+pre_iteration_fld12_split =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD18_FIND_Y
+THEN
+    sptypes <-- binary_split(fld12(iteration_num), CHAR_PLUS);
+    iteration_state:= FLD12_SPLIT
+END;    
+
+
+pre_iteration_SpType =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = FLD12_SPLIT
+THEN
+    IF size(sptypes) /= 2 THEN
+        sptypeA:= fld12(iteration_num);
+        sptypeB:= []
+    ELSE
+        sptypeA:= sptypes(1);
+        sptypeB:= sptypes(2)
+    END;
+    iteration_state:= SPTYPES_INIT
+END;    
+
+pre_iteration_RADE =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = SPTYPES_INIT
+THEN
+    RA1 <-- hms2deg(real(fld20(iteration_num)), real(fld21(iteration_num)), fld22(iteration_num));
+    DE1 <-- dms2deg(real(fld24(iteration_num)), real(fld25(iteration_num)), fld26(iteration_num));
+    IF fld23(iteration_num)(1) = CHAR_MINUS THEN DE1:= 0.0 - DE1 END; 
+    iteration_state:= REL_RADE_INIT
+END;    
+
+/*
+pre_iteration_DE =
+SELECT 
+    iteration_num <= RECORD_COUNT &
+    iteration_state = REL_RA_INIT
+THEN
+    DE1:= dms2deg(real(fld24(iteration_num)), real(fld25(iteration_num)), fld26(iteration_num));
+    iteration_state:= REL_DE_INIT
+END;    
+
+pre_iteration_DE_sign =
+SELECT 
+    iteration_num <= RECORD_COUNT &
+    iteration_state = REL_DE_INIT
+THEN
+    IF fld23(iteration_num)(1) = CHAR_MINUS THEN DE1:= 0.0 - DE1 END; 
+    iteration_state:= REL_DE_SIGN_INIT
+END;    
+*/
+
+pre_iteration_Angles =
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = REL_RADE_INIT
+THEN
+    IF fld7(iteration_num) >= 0 & fld9(iteration_num) >= 0.0 
+    THEN
+        theta:= real(fld7(iteration_num));
+        rho:= fld9(iteration_num);
+        year:= fld4(iteration_num)
+    ELSIF fld6(iteration_num) >= 0 & fld8(iteration_num) >= 0.0 
+    THEN
+        theta:= real(fld6(iteration_num));
+        rho:= fld8(iteration_num);
+        year:= fld3(iteration_num)        
+    ELSE
+        theta:= 0.0;
+        rho:= 0.0;
+        year:= fld4(iteration_num)               
+    END;    
+    iteration_state:= THETA_RHO_YEAR_INIT
+END;    
+
+pre_iteration_rel2abs =    
+SELECT 
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = THETA_RHO_YEAR_INIT
+THEN
+    IF rho >= 0.0 THEN
+        VAR rho1 IN
+            rho1 <-- asec2deg(rho);
+            RA2, DE2 <-- rel2abs(RA1, DE1, theta, rho1)    
+        END
+    END;    
+    iteration_state:= ABS_RADE_INIT
+END;
+
+
+create_system =
+SELECT
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = ABS_RADE_INIT
+THEN
+    IF last_wds /= fld0(iteration_num)
+    THEN
+        VAR acatline_id IN
+            acatline_id <-- insert_catline(fld0(iteration_num));
+            insert_system(acatline_id);
+            last_sys_catline_id:= acatline_id
+        END
+    END;
+    iteration_state:= SYSTEM_CREATED
+END;    
+
+
+create_compA = 
+SELECT
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = SYSTEM_CREATED
+THEN
+    VAR acatline_id IN
+        acatline_id <-- insert_catline(fld0(iteration_num)^compA);
+        insert_comp(acatline_id, 
+            fld10(iteration_num), 
+            spBand, 
+            sptypeA, 
+            0.0, 
+            0.0, 
+            0.0, 
+            pmC*real(fld13(iteration_num)), 
+            pmC*real(fld14(iteration_num)), 
+            RA1, 
+            DE1, 
+            last_sys_catline_id, 
+            0.0, 
+            0.0,    
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0);
+        last_compA_catline_id:= acatline_id    
+    END;
+    iteration_state:= COMP_A_CREATED
+END;    
+
+create_compB = 
+SELECT
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = COMP_A_CREATED
+THEN
+    VAR acatline_id IN
+        acatline_id <-- insert_catline(fld0(iteration_num)^compB);
+        insert_comp(acatline_id, 
+            fld11(iteration_num), 
+            spBand, 
+            sptypeB, 
+            0.0, 
+            0.0, 
+            0.0, 
+            pmC*real(fld15(iteration_num)), 
+            pmC*real(fld16(iteration_num)), 
+            RA2, 
+            DE2, 
+            last_sys_catline_id, 
+            0.0, 
+            0.0,    
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0);
+        last_compB_catline_id:= acatline_id            
+    END;
+    iteration_state:= COMP_B_CREATED
+END;    
+
+create_pair = 
+SELECT
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = COMP_B_CREATED
+THEN
+    VAR pair_id, acatline_id IN
+        IF fld2aux /= []
+        THEN
+            pair_id:= fld0(iteration_num)^fld2aux
+        ELSE
+            pair_id:= fld0(iteration_num)^[CHAR_A, CHAR_B]
+        END;
+        acatline_id <-- insert_catline(pair_id);
+        insert_pair(acatline_id, 
+            year, 
+            theta, 
+            rho, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            spBand, 
+            otype, 
+            [CHAR_D], 
+            last_sys_catline_id, 
+            last_compA_catline_id, 
+            last_compB_catline_id, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0)
+    END;
+    iteration_state:= PAIR_CREATED
+END;    
+
+iteration_last_wds =
+SELECT
+    iteration_num >= 1 & iteration_num <= RECORD_COUNT &
+    iteration_state = PAIR_CREATED
+THEN
+    last_wds:= fld0(iteration_num);
+    iteration_state:= LAST_WDS_UPDATED
+END;    
+
+
+finalize_iteration = 
+SELECT
+    iteration_num < RECORD_COUNT &
+    iteration_state = LAST_WDS_UPDATED    
+THEN
+    iteration_num:= iteration_num + 1;
+    iteration_state:= INITIAL
+WHEN    
+    iteration_num = RECORD_COUNT &
+    iteration_state = LAST_WDS_UPDATED    
+THEN
+    iteration_state:= COMPLETED    
+END    
+
+END
